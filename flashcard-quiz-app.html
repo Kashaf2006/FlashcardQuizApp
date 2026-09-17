@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flashcard Quiz App</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 { color: #333; }
+
+  .card {
+    width: 350px;
+    min-height: 180px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    padding: 25px;
+    text-align: center;
+    margin-top: 20px;
+    cursor: pointer;
+  }
+  .card p { font-size: 18px; color: #222; }
+  .label { font-size: 13px; color: #888; text-transform: uppercase; }
+
+  .buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #4CAF50;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { background: #43a047; }
+  button.secondary { background: #607d8b; }
+  button.secondary:hover { background: #546e7a; }
+  button.danger { background: #e53935; }
+  button.danger:hover { background: #c62828; }
+
+  .form-section {
+    margin-top: 40px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    width: 350px;
+  }
+  .form-section input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+  }
+  .form-section label { font-size: 14px; color: #555; }
+
+  .counter { margin-top: 10px; color: #666; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<h1>📚 Flashcard Quiz App</h1>
+
+<!-- The flashcard itself. Click it to flip between question and answer -->
+<div class="card" id="card" onclick="showAnswer()">
+  <div class="label" id="cardLabel">Question</div>
+  <p id="cardText">No flashcards yet. Add one below!</p>
+</div>
+
+<div class="counter" id="counter">Card 0 of 0</div>
+
+<div class="buttons">
+  <button class="secondary" onclick="prevCard()">⬅ Previous</button>
+  <button onclick="showAnswer()">Show Answer</button>
+  <button class="secondary" onclick="nextCard()">Next ➡</button>
+</div>
+
+<div class="buttons">
+  <button onclick="editCard()">✏️ Edit</button>
+  <button class="danger" onclick="deleteCard()">🗑️ Delete</button>
+</div>
+
+<!-- Form to add a new flashcard -->
+<div class="form-section">
+  <h3>Add a New Flashcard</h3>
+  <label>Question</label>
+  <input type="text" id="newQuestion" placeholder="Enter question">
+  <label>Answer</label>
+  <input type="text" id="newAnswer" placeholder="Enter answer">
+  <button style="margin-top:12px; width:100%;" onclick="addCard()">➕ Add Flashcard</button>
+</div>
+
+<script>
+  // ---------------------------------------------------
+  // DATA: our list of flashcards.
+  // Each flashcard is an object with a question and answer.
+  // ---------------------------------------------------
+  let flashcards = [
+    { question: "What is the capital of France?", answer: "Paris" },
+    { question: "What is 2 + 2?", answer: "4" },
+    { question: "What language runs in a web browser?", answer: "JavaScript" }
+  ];
+
+  let currentIndex = 0;       // which card we're looking at
+  let showingAnswer = false;  // whether we're currently showing the answer
+
+  // Grab references to the HTML elements we need to update
+  const cardText = document.getElementById("cardText");
+  const cardLabel = document.getElementById("cardLabel");
+  const counter = document.getElementById("counter");
+
+  // Update the card display based on currentIndex and showingAnswer
+  function renderCard() {
+    if (flashcards.length === 0) {
+      cardText.textContent = "No flashcards yet. Add one below!";
+      cardLabel.textContent = "Question";
+      counter.textContent = "Card 0 of 0";
+      return;
+    }
+
+    const card = flashcards[currentIndex];
+    cardText.textContent = showingAnswer ? card.answer : card.question;
+    cardLabel.textContent = showingAnswer ? "Answer" : "Question";
+    counter.textContent = `Card ${currentIndex + 1} of ${flashcards.length}`;
+  }
+
+  // Flip to show the answer (click the card or the button)
+  function showAnswer() {
+    if (flashcards.length === 0) return;
+    showingAnswer = !showingAnswer; // toggle between question and answer
+    renderCard();
+  }
+
+  // Move to the next card
+  function nextCard() {
+    if (flashcards.length === 0) return;
+    currentIndex = (currentIndex + 1) % flashcards.length; // loop back to start
+    showingAnswer = false;
+    renderCard();
+  }
+
+  // Move to the previous card
+  function prevCard() {
+    if (flashcards.length === 0) return;
+    currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+    showingAnswer = false;
+    renderCard();
+  }
+
+  // Add a new flashcard from the input fields
+  function addCard() {
+    const q = document.getElementById("newQuestion").value.trim();
+    const a = document.getElementById("newAnswer").value.trim();
+
+    if (q === "" || a === "") {
+      alert("Please fill in both the question and answer.");
+      return;
+    }
+
+    flashcards.push({ question: q, answer: a });
+    document.getElementById("newQuestion").value = "";
+    document.getElementById("newAnswer").value = "";
+
+    currentIndex = flashcards.length - 1; // jump to the new card
+    showingAnswer = false;
+    renderCard();
+  }
+
+  // Edit the current flashcard
+  function editCard() {
+    if (flashcards.length === 0) return;
+    const card = flashcards[currentIndex];
+
+    const newQ = prompt("Edit question:", card.question);
+    if (newQ === null) return; // user cancelled
+    const newA = prompt("Edit answer:", card.answer);
+    if (newA === null) return;
+
+    card.question = newQ.trim() || card.question;
+    card.answer = newA.trim() || card.answer;
+    showingAnswer = false;
+    renderCard();
+  }
+
+  // Delete the current flashcard
+  function deleteCard() {
+    if (flashcards.length === 0) return;
+    if (!confirm("Delete this flashcard?")) return;
+
+    flashcards.splice(currentIndex, 1); // remove it from the array
+    if (currentIndex >= flashcards.length) {
+      currentIndex = flashcards.length - 1; // adjust index if we deleted the last one
+    }
+    showingAnswer = false;
+    renderCard();
+  }
+
+  // Show the first card when the page loads
+  renderCard();
+</script>
+
+</body>
+</html>
